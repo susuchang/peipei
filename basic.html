@@ -1,0 +1,179 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>KAKAO FRIENDS</title>
+	<style type="text/css">
+		-webkit-appearance：none
+		@font-face {
+			font-family: HelveticaNeue;
+			src: url(font/HelveticaNeue.ttc);
+		}
+		body { font-family: Helvetica, sans-serif; background-color:black ;margin-bottom:0;margin-top:0; }
+		#circle_bot{ 
+		background-color:#fff; 
+		width: 100px; 
+		height: 100px; 
+		position:absolute;
+		top: 10px;
+		left: 10px;
+		border-radius: 50%; } 
+		#circle_mid { 
+		background-color:#000; 
+		width: 80px; 
+		height: 80px; 
+		position:absolute;
+		top:20px;
+		left:20px;
+		border-radius: 50%; } 
+		#circle_top{ 
+		background-color:#fff; 
+		width: 76px; 
+		height: 76px; 
+		position:absolute;
+		top:22px;
+		left:22px;
+		border-radius: 50%;
+		}
+		#circle_top.click{
+		animation-name:click;
+		animation-duration:0.5s;
+		animation-iteration-count: 1;
+		animation-fill-mode: forwards;
+		}
+		@keyframes click{
+			from{
+				width: 76px; 
+				height: 76px;
+				border-radius: 50%;
+				top:22px;
+				left:22px;
+			}
+			to{
+				width: 50px; 
+				height: 50px;
+				border-radius: 20%;
+				top:35px;
+				left:35px;
+			}
+		}
+		#cameraButton{
+		position:absolute;
+		bottom:160px;
+		left:462px;
+		}
+		#times{
+			position: absolute;
+			top: 496px;
+			left:454px;
+			color: white;
+			width: 117px;
+			height: 238px;
+			font-family: HelveticaNeue;
+			font-size: 200px;
+			font-weight: 500;
+			font-stretch: normal;
+			font-style: normal;
+			line-height: normal;
+			letter-spacing: 5px;
+			text-align: right;
+		}
+	</style>
+</head>
+<body>
+	<!-- <div id="results">Your captured image will appear here...</div> -->
+	<div style="margin: 0 auto;background-color:black;width:802px;height:1070px;position:absolute;top:80px;left:110px;"id="my_camera"></div>
+	<!--<div id="app"></div>-->
+	<div id="times"></div>
+	<img src="frame.png" style="width:802px;height:1070px;position:absolute;top:80px;left:110px;">
+	<div id="cameraButton">
+		<div id="circle_bot"> </div> 
+		<div id="circle_mid"> </div> 
+		<div id="circle_top"> </div>
+	</div> 
+	<!-- First, include the Webcam.js JavaScript Library -->
+	<script type="text/javascript" src="../webcam.min.js"></script>
+	
+	<!-- Configure a few settings and attach camera -->
+	<script language="JavaScript">
+		Webcam.set({
+			width: 802,
+			height: 1070,
+			image_format: 'jpeg',
+			jpeg_quality: 100
+		});
+		Webcam.attach( '#my_camera' );
+	</script>
+	<script language="JavaScript">
+		const TIME_LIMIT = 3;
+		let timePassed = 0;
+		let timeLeft = TIME_LIMIT;
+		let timerInterval = null;
+		function startTimer() {
+				timerInterval = setInterval(() => {
+					timePassed = timePassed += 0.01;
+					timeLeft = TIME_LIMIT - timePassed;	
+			var second=Math.ceil(timeLeft);
+			var opacityValue=1-(second-timeLeft);       
+			document.getElementById("times").innerText=second;
+			document.getElementById("times").style.opacity=opacityValue;
+					if (timeLeft < 0) {
+					take_snapshot()
+					clearInterval(timerInterval);
+					timePassed = 0;
+					document.getElementById("times").innerText='';
+					document.getElementById("circle_top").classList.remove('click');
+					}
+				}, 10);
+		}
+		var button=document.getElementById("cameraButton");
+		button.onmousedown=function(){
+		startTimer();
+		document.getElementById("circle_top").classList.add('click');
+  }
+	</script>
+	
+	</div>
+	<!-- </form> -->
+	
+	<!-- Code to handle taking the snapshot and displaying it locally -->
+	<script language="JavaScript">
+		function take_snapshot() {
+			// take snapshot and get image data
+			Webcam.snap( function(data_uri) {
+				// display results in page
+				// document.getElementById('results').innerHTML = 
+				// 	'<h2>Here is your image:</h2>' + 
+				// 	'<img src="'+data_uri+'"/>';
+				var machine_id = "3345678";
+				var base64 = data_uri.substring(23, data_uri.length);
+				// console.log(data_uri);
+				// console.log("-------------------------------------------------------");
+				// console.log(base64);
+				var url = 'https://11bc25705af5.jp.ngrok.io/face_sticker';
+				var query_string = "{\"machine_id\":\"" + machine_id + "\", \"face\":\"" + base64 + "\"}"
+				// var queryString = "map[temperature:36.47999954223633 faces:[" + base64 + "] front_value:98 scale_out_y:0.4000000059604645 sharpen_ness:96 time:1.599466277e+09 cid:295100000209 track_id:4 type:1 position:[[512,112],[1472,1072]] result:map[confidence:36.47999954223633 person_id: person_name: person_type:0 sex: age:0] scale_out_x:1 upload_face_size:120]";
+				// xmlHttp.open('POST', url);
+				// xmlHttp.setRequestHeader('Content-Type',  'application/x-www-form-urlencoded');
+				// xmlHttp.send(queryString);
+				console.log(query_string)
+				var xhr = new XMLHttpRequest();
+				xhr.open("POST", url, true);
+				//Send the proper header information along with the request
+				// xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
+				xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+				xhr.onreadystatechange = function() { // Call a function when the state changes.
+					if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+						// Request finished. Do processing here.
+						console.log(xhr.responseText)
+						window.location.href = "https://11bc25705af5.jp.ngrok.io/show_picture?pic_url=" + xhr.responseText + "&machine_id=" + machine_id;
+					}
+					
+				}
+				xhr.send(query_string);
+			} );
+		}
+	</script>
+</body>
+</html>
